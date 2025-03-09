@@ -61,4 +61,11 @@ public class MessageListener {
         log.info("Received non priority message : {}", record);
     }
 
+    @KafkaListener(topics = "${kafka.second-topic}", containerFactory = "errorHandlerKafkaListenerContainerFactory")
+    public void listenErrorHandlerTopic(Object record) {
+        log.info("Received error handler message : {}", record);
+
+        throw new RuntimeException();
+    }
+
 }

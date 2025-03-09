@@ -10,7 +10,9 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +59,19 @@ public class KafkaConsumerConfig {
 
         factory.setRecordFilterStrategy(consumerRecord -> "priority".equals(consumerRecord.key()));
         factory.setConsumerFactory(consumerFactory("consumerNonPriorityGroup"));
+        factory.setAutoStartup(true);
+        factory.setConcurrency(1);
+
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Object> errorHandlerKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory("consumerErrorHandlerGroup"));
+        factory.setErrorHandler(new SeekToCurrentErrorHandler(new FixedBackOff(500, 2)));
+        // Retry 2 times with 500 ms interval
         factory.setAutoStartup(true);
         factory.setConcurrency(1);
 
