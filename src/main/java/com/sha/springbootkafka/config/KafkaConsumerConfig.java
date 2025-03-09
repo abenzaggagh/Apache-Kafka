@@ -39,6 +39,30 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Object> priorityKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setRecordFilterStrategy(consumerRecord -> !"priority".equals(consumerRecord.key()));
+        factory.setConsumerFactory(consumerFactory("consumerPriorityGroup"));
+        factory.setAutoStartup(true);
+        factory.setConcurrency(1);
+
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Object> nonPriorityKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setRecordFilterStrategy(consumerRecord -> "priority".equals(consumerRecord.key()));
+        factory.setConsumerFactory(consumerFactory("consumerNonPriorityGroup"));
+        factory.setAutoStartup(true);
+        factory.setConcurrency(1);
+
+        return factory;
+    }
+
     private ConsumerFactory<String, Object> consumerFactory(String groupID) {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CONSUMER_BROKERS);

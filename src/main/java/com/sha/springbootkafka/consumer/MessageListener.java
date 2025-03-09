@@ -51,4 +51,14 @@ public class MessageListener {
         log.info("Received message in group from beginning: {}", record);
     }
 
+    @KafkaListener(topics = "${kafka.second-topic}", containerFactory = "priorityKafkaListenerContainerFactory")
+    public void listenPriorityTopic(Object record) {
+        log.info("Received priority message : {}", record);
+    }
+
+    @KafkaListener(topics = "${kafka.second-topic}", containerFactory = "nonPriorityKafkaListenerContainerFactory")
+    public void listenNonPriorityTopic(Object record) {
+        log.info("Received non priority message : {}", record);
+    }
+
 }
