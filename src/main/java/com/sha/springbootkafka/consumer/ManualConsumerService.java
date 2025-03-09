@@ -29,9 +29,7 @@ public class ManualConsumerService {
 
         ConsumerRecords<String, Object> records = manualConsumer.poll(Duration.ofMillis(1000));
 
-        records.forEach(record -> {
-            log.info("Record: {}", record);
-        });
+        records.forEach(record -> log.info("Record: {}", record));
 
         manualConsumer.unsubscribe();
 

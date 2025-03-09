@@ -49,7 +49,7 @@ public class KafkaConsumerConfig {
         jsonDeserializer.addTrustedPackages("*");
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, jsonDeserializer);
 
-        return new DefaultKafkaConsumerFactory<String, Object>(properties, new StringDeserializer(), jsonDeserializer);
+        return new DefaultKafkaConsumerFactory<>(properties, new StringDeserializer(), jsonDeserializer);
     }
 
 }
