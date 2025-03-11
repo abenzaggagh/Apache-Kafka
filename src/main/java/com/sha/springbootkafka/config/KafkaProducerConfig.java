@@ -21,14 +21,23 @@ public class KafkaProducerConfig {
 
     @Bean
     public KafkaTemplate<String, Object> kafkaProducerTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+        return new KafkaTemplate<>(producerFactory(false));
     }
 
-    private ProducerFactory<String, Object> producerFactory() {
+    @Bean
+    public KafkaTemplate<String, Object> kafkaTransactionalProducerTemplate() {
+        return new KafkaTemplate<>(producerFactory(true));
+    }
+
+    private ProducerFactory<String, Object> producerFactory(boolean enableTransaction) {
         Map<String, Object> configuration = new HashMap<>();
         configuration.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, PRODUCER_BROKERS);
         configuration.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configuration.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        if (enableTransaction) {
+            configuration.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "transactional");
+        }
 
         return new DefaultKafkaProducerFactory<>(configuration);
     }

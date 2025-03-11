@@ -21,6 +21,9 @@ public class KafkaTopicConfig {
     @Value("${kafka.second-topic}")
     private String SECOND_TOPIC;
 
+    @Value("${kafka.transactional-topic}")
+    private String TRANSACTIONAL_TOPIC;
+
     private final KafkaAdmin kafkaAdmin;
 
 
@@ -40,10 +43,18 @@ public class KafkaTopicConfig {
                 .build();
     }
 
+    private NewTopic transactionalTopic() {
+        return TopicBuilder.name(TRANSACTIONAL_TOPIC)
+                .partitions(3)
+                .replicas(2)
+                .build();
+    }
+
     @PostConstruct
     public void init() {
         kafkaAdmin.createOrModifyTopics(firstTopic());
         kafkaAdmin.createOrModifyTopics(secondTopic());
+        kafkaAdmin.createOrModifyTopics(transactionalTopic());
     }
 
 }

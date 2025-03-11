@@ -68,4 +68,10 @@ public class MessageListener {
         throw new RuntimeException();
     }
 
+
+    @KafkaListener(topics = "${kafka.transactional-topic}", containerFactory = "transactionalKafkaListenerContainerFactory")
+    public void listenTransactionalTopic(Object record) {
+        log.info("Received transactional message : {}", record);
+    }
+
 }

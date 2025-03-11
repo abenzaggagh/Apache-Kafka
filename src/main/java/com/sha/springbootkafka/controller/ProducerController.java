@@ -4,6 +4,8 @@ import com.sha.springbootkafka.model.MessageEntity;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -23,7 +27,6 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping("api/producer")
 
-@RequiredArgsConstructor
 public class ProducerController {
 
     @Value("${kafka.first-topic}")
@@ -32,7 +35,20 @@ public class ProducerController {
     @Value("${kafka.second-topic}")
     private String SECOND_TOPIC;
 
+    @Value("${kafka.transactional-topic}")
+    private String TRANSACTIONAL_TOPIC;
+
     private final KafkaTemplate<String, Object> kafkaProducerTemplate;
+
+    private final KafkaTemplate<String, Object> kafkaTransactionalProducerTemplate;
+
+    @Autowired
+    public ProducerController(KafkaTemplate<String, Object> kafkaProducerTemplate,
+                              @Qualifier("kafkaTransactionalProducerTemplate")
+                              KafkaTemplate<String, Object> kafkaTransactionalProducerTemplate) {
+        this.kafkaProducerTemplate = kafkaProducerTemplate;
+        this.kafkaTransactionalProducerTemplate = kafkaTransactionalProducerTemplate;
+    }
 
     @PostMapping("send")
     public ResponseEntity<?> sendMessage() throws ExecutionException, InterruptedException {
@@ -72,6 +88,30 @@ public class ProducerController {
         log.info("Sent key message with offset : {}, partition: {}", result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
 
         return ResponseEntity.ok().body(messageEntity);
+    }
+
+    @PostMapping("transaction/{key}")
+    public ResponseEntity<?> sendTransactionalMessage(@PathVariable String key) {
+        List<MessageEntity> messageEntities = new ArrayList<>();
+
+        kafkaTransactionalProducerTemplate.executeInTransaction(kafkaOperations -> {
+            String[] keyList = key.split(",");
+
+            for(String str: keyList) {
+                if ("success".equals(str)) {
+                    MessageEntity messageEntity = new MessageEntity(str, LocalDateTime.now());
+
+                    kafkaOperations.send(TRANSACTIONAL_TOPIC, messageEntity);
+                    messageEntities.add(messageEntity);
+                } else {
+                    throw new RuntimeException();
+                }
+            }
+
+            return null;
+        });
+
+        return ResponseEntity.ok().body(messageEntities);
     }
 
 }

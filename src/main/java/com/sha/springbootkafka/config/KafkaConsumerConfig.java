@@ -78,11 +78,24 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Object> transactionalKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory("consumerTransactionalGroup"));
+        factory.setAutoStartup(true);
+        factory.setConcurrency(1);
+
+        return factory;
+    }
+
     private ConsumerFactory<String, Object> consumerFactory(String groupID) {
         Map<String, Object> properties = new HashMap<>();
+
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CONSUMER_BROKERS);
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupID);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_commited");
 
         JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>();
         jsonDeserializer.addTrustedPackages("*");
